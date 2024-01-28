@@ -1,0 +1,1 @@
+c:/Users/lider/anaconda3/envs/quantsLab/python.exe d:/pythonWorkspace/quantsLab/scheduler/data_collector_1d.py

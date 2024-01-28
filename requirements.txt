@@ -1,0 +1,9 @@
+pymongo
+configparser
+python-kis
+environ
+prettytable
+python-dotenv
+flask
+flask-restful
+dotenv
