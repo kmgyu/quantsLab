@@ -32,7 +32,6 @@ code_hname_to_eng = {
     "단축코드": "code",
     "표준코드": "extend_code",
     "종목명": "name",
-    "시장구분": "market",
     "매매수량단위": "quantity",
     "기업인수목적회사구분": "is_spac"
 }
@@ -55,9 +54,7 @@ code_fields = {
     "code": fields.String,
     "extend_code": fields.String,
     "name": fields.String,
-    "memedan": fields.Integer,
-    "market": fields.String,
-    "is_etf": fields.String,
+    "quantity": fields.Integer,
     "is_spac": fields.String,
     "uri": fields.Url("code")
 }
@@ -87,6 +84,20 @@ price_list_fields = {
     "count": fields.Integer,
     "price_list": fields.List(fields.Nested(price_fields)),
  }
+
+order_hname_to_eng = {
+    "주문번호": "order_no",
+    "주문수량": "st_quantity",
+    "단축코드": "code",
+    "status": "status"
+}
+
+order_list_fields = {
+    "order_no": fields.String,
+    "st_quantity": fields.Integer,
+    "code": fields.String,
+    "status": fields.String
+}
 
 
 mongodb = MongoDBHandler()
@@ -125,7 +136,7 @@ class Price(Resource):
         default_start_date = datetime.datetime.now() - datetime.timedelta(days=7)
         start_date = request.args.get('start_date', default=default_start_date.strftime("%Y%m%d"), type=str)
         end_date = request.args.get('end_date', default=today, type=str)
-        results = list(mongodb.find_items({"code":code, "날짜": {"$gte":start_date, "$lte":end_date}}, 
+        results = list(mongodb.find_items({"단축코드":code, "날짜": {"$gte":start_date, "$lte":end_date}}, 
                                             "quantsLab", "price_info"))
         result_object = {}
         price_info_list = []
@@ -134,18 +145,29 @@ class Price(Resource):
             price_info_list.append(price_info)
         result_object["price_list"] = price_info_list
         result_object["count"] = len(price_info_list)
+        
+        print(results)
+        print(result_object, start_date, end_date)
         return result_object, 200
 
 class OrderList(Resource):
+    @marshal_with(order_list_fields)
     def get(self):
         status = request.args.get('status', default="all", type=str)
         if status == 'all':
-            result_list = list(mongodb.find_items({}, "stocklab_demo", "order"))
+            result_list = list(mongodb.find_items({}, "quantsLab", "order"))
         elif status in ["buy_ordered", "buy_completed", "sell_ordered", "sell_completed"]:
-            result_list = list(mongodb.find_items({"status":status}, "stocklab_demo", "order"))
+            result_list = list(mongodb.find_items({"status":status}, "quantsLab", "order"))
         else:
             return {}, 404
-        return { "count": len(result_list), "order_list": result_list }, 200
+        
+        order_info_list = []
+        for item in result_list:
+            order_info = {order_hname_to_eng[field]: item[field] for field in item.keys() if field in order_hname_to_eng}
+            
+            order_info_list.append(order_info)
+        
+        return order_info_list, 200
 
 api.add_resource(CodeList, "/codes", endpoint="codes")
 api.add_resource(Code, "/codes/<string:code>", endpoint="code")

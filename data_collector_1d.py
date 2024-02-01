@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 from pykis import *
 from prettytable import PrettyTable
-from ..db_handler.mongodb_handler import MongoDBHandler
+from db_handler.mongodb_handler import MongoDBHandler
 import datetime
 import time
 
@@ -17,15 +17,22 @@ import time
 
 load_dotenv()
 
+ACCOUNT_NO = os.environ.get('ACCOUNT_NO')
+print(ACCOUNT_NO)
 kis = PyKis(
     # 앱 키  예) Pa0knAM6JLAjIa93Miajz7ykJIXXXXXXXXXX
-    appkey=os.environ.get('APPKEY'),
+    # appkey=os.environ.get('APPKEY'),
+    appkey='PSTHN47hUKYoIslXPaIjUpm7Bw8uj9uTQN7c',
     # 앱 시크릿  예) V9J3YGPE5q2ZRG5EgqnLHn7XqbJjzwXcNpvY . . .
-    appsecret=os.environ.get('APPSECRET'),
+    # appsecret=os.environ.get('APPSECRET'),
+    appsecret='KIaC0HmcC73oZMc+0YHxCTDcse9gbq6j5ckplU5GNEDu4XIST6QBEWG4UM+BQ+H/Qvm4pLWYsX7xQKxMiMD611AsEwAb+qE85TXVmGwlnRoU7lPnMzXu8KaytvioJKrj913XyH4Q+T6erXlJ0gAHoU4oJkJbMhUqzMEra14gRVmQC2QSOO8=',
     # 가상 계좌 여부
     virtual_account=True,
+    
 )
 mongodb = MongoDBHandler()
+
+account = kis.account('50101522-01')
 
 def collect_code_list():
     # 단축코드를 db에 추가
@@ -37,10 +44,11 @@ def collect_code_list():
                              "매매수량단위": stock.frml_mrkt_deal_qty_unit,
                              "기업인수목적회사구분": stock.etpr_undt_objt_co_yn}, 
                             "quantsLab", "code_info")
+        
 
 
 def collect_stock_info():
-    # 현재가 조회
+    # 가격 조회
     # 현재가 이외에도 조회 가능하다.
     code_list = mongodb.find_items({}, "quantsLab", "code_info")
     target_code = set([item["단축코드"] for item in code_list])
@@ -68,27 +76,15 @@ def collect_stock_info():
             '거래대금':price.acml_tr_pbmn,
             '날짜':today
         }
-        mongodb.update_item(condition={'단축코드':code}, update_value=result_price,
+        mongodb.insert_item(condition={'단축코드':code},
                             db_name="quantsLab", collection_name="price_info")
+
+
 
 if __name__ == '__main__':
     collect_code_list()
     collect_stock_info()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # buy_order_unitTest()
 
 
 # # 먼저 계좌 스코프를 생성한다.
