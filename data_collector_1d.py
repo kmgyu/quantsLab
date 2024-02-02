@@ -21,18 +21,15 @@ ACCOUNT_NO = os.environ.get('ACCOUNT_NO')
 print(ACCOUNT_NO)
 kis = PyKis(
     # 앱 키  예) Pa0knAM6JLAjIa93Miajz7ykJIXXXXXXXXXX
-    # appkey=os.environ.get('APPKEY'),
-    appkey='PSTHN47hUKYoIslXPaIjUpm7Bw8uj9uTQN7c',
+    appkey=os.environ.get('APPKEY'),
     # 앱 시크릿  예) V9J3YGPE5q2ZRG5EgqnLHn7XqbJjzwXcNpvY . . .
-    # appsecret=os.environ.get('APPSECRET'),
-    appsecret='KIaC0HmcC73oZMc+0YHxCTDcse9gbq6j5ckplU5GNEDu4XIST6QBEWG4UM+BQ+H/Qvm4pLWYsX7xQKxMiMD611AsEwAb+qE85TXVmGwlnRoU7lPnMzXu8KaytvioJKrj913XyH4Q+T6erXlJ0gAHoU4oJkJbMhUqzMEra14gRVmQC2QSOO8=',
+    appsecret=os.environ.get('APPSECRET'),
     # 가상 계좌 여부
     virtual_account=True,
-    
 )
 mongodb = MongoDBHandler()
 
-account = kis.account('50101522-01')
+account = kis.account(ACCOUNT_NO)
 
 def collect_code_list():
     # 단축코드를 db에 추가
@@ -53,10 +50,12 @@ def collect_stock_info():
     code_list = mongodb.find_items({}, "quantsLab", "code_info")
     target_code = set([item["단축코드"] for item in code_list])
     today = datetime.datetime.today().strftime("%Y%m%d")
-    collect_list = mongodb.find_items({"날짜":today}, "quantsLab", "price_info").distinct("code")
+    print(today)
+    collect_list = mongodb.find_items({"날짜":today}, "quantsLab", "price_info").distinct("단축코드")
     for col in collect_list:
         target_code.remove(col)
     for code in target_code:
+        print(code)
         stock = kis.stock(code)
         if not stock:
             print('주식 정보를 찾을 수 없습니다.')
@@ -76,7 +75,7 @@ def collect_stock_info():
             '거래대금':price.acml_tr_pbmn,
             '날짜':today
         }
-        mongodb.insert_item(condition={'단축코드':code},
+        mongodb.insert_item(result_price,
                             db_name="quantsLab", collection_name="price_info")
 
 
