@@ -64,7 +64,8 @@ class CodePrice extends Component {
                                             {title:"저가", field:"low"},
                                             {title:"종가", field:"close"}]})
                     this.setState({data:data["price_list"]});
-                }); 
+                })
+                ; 
         }
     }
     render(){

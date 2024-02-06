@@ -5,6 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import CodeSearch from '../components/CodeSearch';
 import CodePrice from '../components/CodePrice';
 import CodeChart from '../components/CodeChart';
+import CodePredict from '../components/CodePredict';
 
 const styles = {
     root: {
@@ -55,6 +56,9 @@ class CodeInfo extends Component {
                         </Grid>
                     </Grid>
                 </div>
+                <Grid key={"codePredict"} item>
+                    <CodePredict code={this.state.selectedCode}/>
+                </Grid>
             </div>
         );
     }

@@ -27,9 +27,10 @@ kis = PyKis(
     # 가상 계좌 여부
     virtual_account=True,
 )
-mongodb = MongoDBHandler()
 
 account = kis.account(ACCOUNT_NO)
+
+mongodb = MongoDBHandler()
 
 def collect_code_list():
     # 단축코드를 db에 추가
@@ -78,12 +79,43 @@ def collect_stock_info():
         mongodb.insert_item(result_price,
                             db_name="quantsLab", collection_name="price_info")
 
-
+def collect_stock_period_price():
+    code = '000150' # 덕성
+    today = datetime.datetime.today()
+    collect_list = mongodb.find_items({"날짜":today.strftime("%Y%m%d")}, "quantsLab", "price_info").distinct("단축코드")
+    stock = kis.stock(code) 
+    prices = stock.period_price(
+    # 조회 시작일
+    today-datetime.timedelta(weeks=26),
+    # 조회 종료일
+    today
+    )
+    
+    for price in prices.prices:
+        result_price = {
+            '단축코드':code,
+            # '전일대비율':price.prdy_ctrt,
+            # '현재가':price.stck_prpr,
+            '시가':price.stck_oprc,
+            '최저가':price.stck_lwpr,
+            '최고가':price.stck_hgpr,
+            '종가':price.stck_clpr,
+            '전일대비':price.prdy_vrss,
+            # '전일대비거래량비율':price.prdy_vrss_vol_rate,
+            '거래대금':price.acml_tr_pbmn,
+            # '날짜':today.strftime("%Y%m%d")
+            '날짜':price.stck_bsop_date.strftime("%Y%m%d")
+        }
+        mongodb.insert_item(result_price,
+                            db_name="quantsLab", collection_name="price_info")
+    print(f'{code} data update completed')
 
 if __name__ == '__main__':
     collect_code_list()
-    collect_stock_info()
+    # collect_stock_info()
+    collect_stock_period_price()
     # buy_order_unitTest()
+    
 
 
 # # 먼저 계좌 스코프를 생성한다.

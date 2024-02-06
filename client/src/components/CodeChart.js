@@ -27,14 +27,14 @@ class CodeChart extends Component {
                 }); 
         }
     }
-
+// 해당 차트는 시가기준으로 잡으니 조심할 것.
     render(){
         console.log("CodeChart render", this.state.data);
         return (
             <div>
             {this.state.data.length >0 ?
                 (
-                    <LineChart width={500} height={300} data={this.state.data} 
+                    <LineChart width={600} height={500} data={this.state.data} 
                         margin={{ top: 5, right: 30, left: 20, bottom: 5, }} >
                     <XAxis dataKey="date" />
                     <YAxis/>

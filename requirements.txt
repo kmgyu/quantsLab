@@ -5,5 +5,14 @@ environ
 prettytable
 python-dotenv
 flask
+flask_cors
 flask-restful
-dotenv
+
+# machine-learning model
+finance-datareader
+numpy
+pandas
+scikit-learn
+tensorflow<=2.15
+keras<2.16
+plotly

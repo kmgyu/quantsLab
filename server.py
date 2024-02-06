@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from flask_restful import reqparse, abort, Api, Resource, fields, marshal_with
 from db_handler.mongodb_handler import MongoDBHandler
+from predicting import predict
 import datetime
 
 # import os
@@ -44,7 +45,6 @@ price_hname_to_eng = {
     "최고가": "high",
     "최저가": "low",
     "전일대비": "diff",
-    "전일대비율": "diff_per",
     "전일대비거래량비율": "trsc_diff_per",
     "거래대금": "trsc_value", #transaction amount
 }
@@ -71,7 +71,6 @@ code_list_fields = {
 
 price_fields = {
     "date": fields.Integer,
-    "start": fields.Integer,
     "close": fields.Integer,
     "open": fields.Integer,
     "high": fields.Integer,
@@ -99,6 +98,9 @@ order_list_fields = {
     "status": fields.String
 }
 
+predict_fields = {
+    "message": fields.String,
+}
 
 mongodb = MongoDBHandler()
 #https://flask-restful.readthedocs.io/en/0.3.3/intermediate-usage.html#full-parameter-parsing-example
@@ -115,6 +117,7 @@ class Code(Resource):
         return code_info
 
 class CodeList(Resource):
+    # 너무 많아서 렉거림ㅁ. 100개로 제한시켰다.
     @marshal_with(code_list_fields)
     def get(self):
         market = request.args.get('market', default="0", type=str)
@@ -127,7 +130,7 @@ class CodeList(Resource):
             code_info = {}
             code_info = { code_hname_to_eng[field]: item[field] for field in item.keys() if field in code_hname_to_eng }
             result_list.append(code_info)
-        return {"code_list" : result_list, "count": len(result_list)}, 200
+        return {"code_list" : result_list[:100], "count": len(result_list)}, 200
 
 class Price(Resource):
     @marshal_with(price_list_fields)
@@ -138,6 +141,7 @@ class Price(Resource):
         end_date = request.args.get('end_date', default=today, type=str)
         results = list(mongodb.find_items({"단축코드":code, "날짜": {"$gte":start_date, "$lte":end_date}}, 
                                             "quantsLab", "price_info"))
+        results.sort(key=lambda x:x["날짜"])
         result_object = {}
         price_info_list = []
         for item in results:
@@ -146,8 +150,9 @@ class Price(Resource):
         result_object["price_list"] = price_info_list
         result_object["count"] = len(price_info_list)
         
-        print(results)
-        print(result_object, start_date, end_date)
+        # print(results)
+        print('get pricelist', start_date, end_date)
+        
         return result_object, 200
 
 class OrderList(Resource):
@@ -169,10 +174,20 @@ class OrderList(Resource):
         
         return order_info_list, 200
 
+class Prediction(Resource):
+    @marshal_with(predict_fields)
+    def get(self, code):
+        message = predict(code)
+        print(message)
+        return {"message":message}, 200
+        
+    
+
 api.add_resource(CodeList, "/codes", endpoint="codes")
 api.add_resource(Code, "/codes/<string:code>", endpoint="code")
 api.add_resource(Price, "/codes/<string:code>/price", endpoint="price")
 api.add_resource(OrderList, "/orders", endpoint="orders")
+api.add_resource(Prediction, "/codes/<string:code>/predict", endpoint="predict")
 
 if __name__ == "__main__":
     app.run(debug=True)
